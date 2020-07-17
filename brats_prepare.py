@@ -5,9 +5,9 @@ from medpy.io import load
 import h5py
 import torch
 
-data_path_1 = '/content/drive/Shared drives/CSE:2-2:Nishant_Jain/BraTS/Dataset/MICCAI_BraTS_2018_Data_Training/LGG/'
-data_path_2 = '/content/drive/Shared drives/CSE:2-2:Nishant_Jain/BraTS/Dataset/MICCAI_BraTS_2018_Data_Training/HGG/'
-target_path = '/content/drive/My Drive/training_brats'  
+data_path_1 = '/BraTS/Dataset/MICCAI_BraTS_2018_Data_Training/LGG/'
+data_path_2 = 'BraTS/Dataset/MICCAI_BraTS_2018_Data_Training/HGG/'
+target_path = '/training_brats'  
 
 #def convert_label(label_img):
     #label_processed=np.zeros(label_img.shape[0:]).astype(np.uint8)
@@ -65,6 +65,7 @@ def cut_edge(data, keep_margin):
 def build_h5_dataset(data_path_1,data_path_2,target_path):
  list_input_1 = np.array(os.listdir(data_path_1))
  list_input_2 = np.array(os.listdir(data_path_2))
+ list_input = list_input_1 + list_input_2   
  i= 0
  for filename in list_input_1:
      data_path_11 = data_path_1 + filename + '/'
@@ -106,113 +107,37 @@ def build_h5_dataset(data_path_1,data_path_2,target_path):
      inputs_tmp_t2 = (inputs_t2 - inputs_t2[mask].mean()) / inputs_t2[mask].std()
      inputs_tmp_flair = (inputs_flair - inputs_flair[mask].mean()) / inputs_flair[mask].std()
 
-     #margin = 64/2   # training_patch_size / 2
-     #mask = mask.astype(np.uint8)
-     #min_D_s, max_D_e, min_H_s, max_H_e, min_W_s, max_W_e = cut_edge(mask, margin)
-     #inputs_tmp_t1 = inputs_t1_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-     #inputs_tmp_t1ce = inputs_t1ce_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-     #inputs_tmp_t2 = inputs_t2_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-     #inputs_tmp_flair = inputs_flair_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
+     margin = 64/2   # training_patch_size / 2
+     mask = mask.astype(np.uint8)
+     min_D_s, max_D_e, min_H_s, max_H_e, min_W_s, max_W_e = cut_edge(mask, margin)
+     inputs_tmp_t1 = inputs_t1_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
+     inputs_tmp_t1ce = inputs_t1ce_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
+     inputs_tmp_t2 = inputs_t2_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
+     inputs_tmp_flair = inputs_flair_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
 
-     #inputs_seg_tmp = inputs_seg[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
+     inputs_seg_tmp = inputs_seg[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
 
-     inputs_tmp_t1 = inputs_tmp_t1
-     inputs_tmp_t1ce = inputs_tmp_t1ce
-     inputs_tmp_t2 = inputs_tmp_t2
-     inputs_tmp_flair = inputs_tmp_flair
      
-     #inputs_tmp_t1 = inputs_tmp_t1[:, :, :, None]
-     #inputs_tmp_t1ce = inputs_tmp_t1ce[:, :, :, None]
-     #inputs_tmp_t2 = inputs_tmp_t2[:, :, :, None]
-     #inputs_tmp_flair = inputs_tmp_flair[:, :, :, None]
+     inputs_tmp_t1 = inputs_tmp_t1[:, :, :, None]
+     inputs_tmp_t1ce = inputs_tmp_t1ce[:, :, :, None]
+     inputs_tmp_t2 = inputs_tmp_t2[:, :, :, None]
+     inputs_tmp_flair = inputs_tmp_flair[:, :, :, None]
 
-     #inputs = np.concatenate((inputs_tmp_t1,inputs_tmp_t1ce,inputs_tmp_t2,inputs_tmp_flair),axis=3)
+     inputs = np.concatenate((inputs_tmp_t1,inputs_tmp_t1ce,inputs_tmp_t2,inputs_tmp_flair),axis=3)
      inputs_caffe = inputs_tmp_t2#[None, :, :, :, :]
-     #inputs_seg_caffe = inputs_seg_tmp[None, :, :, :, :]
+     inputs_seg_caffe = inputs_seg_tmp[None, :, :, :, :]
      
-     #inputs_caffe = inputs_caffe.transpose(0, 4, 3, 1, 2)
-     #inputs_seg_caffe = inputs_seg_caffe.transpose(0, 4, 3, 1, 2)
+     inputs_caffe = inputs_caffe.transpose(0, 4, 3, 1, 2)
+     inputs_seg_caffe = inputs_seg_caffe.transpose(0, 4, 3, 1, 2)
 
-     #print (inputs_caffe.shape, inputs_seg_caffe.shape)
-     print (inputs_caffe.shape)
+     print (inputs_caffe.shape, inputs_seg_caffe.shape)
+     #print (inputs_caffe.shape)
      with h5py.File(os.path.join(target_path, 'train_brats_nocut_%s.h5' % (i+1)), 'w') as f:
          f['data'] = inputs_caffe  # for caffe num channel x d x h x w
          f['label'] = torch.Tensor([0])
      i = i+1   
 
- for filename in list_input_2:
-     #data_path_11 = data_path_1 + filename + '/'
-     data_path_21 = data_path_2 + filename + '/'
-     #list_input_11 = np.array(os.listdir(data_path_11))
-     #list_input_21 = np.array(os.listdir(data_path_21))
-     input_path_t1 = filename + '_t1.nii.gz'
-     input_path_t1ce = filename + '_t1ce.nii.gz'
-     input_path_t2 = filename + '_t2.nii.gz'
-     input_path_flair = filename + '_flair.nii.gz'
-     input_path_seg = filename + '_seg.nii.gz'
-
-     f_t1 = os.path.join(data_path_11,input_path_t1)
-     img_t1,header_t1 = load(f_t1)
-
-     f_t1ce = os.path.join(data_path_11,input_path_t1ce)
-     img_t1ce,header_t1ce = load(f_t1ce)
-
-     f_t2 = os.path.join(data_path_11,input_path_t2)
-     img_t2,header_t2 = load(f_t2)
-
-     f_flair = os.path.join(data_path_11,input_path_flair)
-     img_flair,header_flair = load(f_flair)
-
-     f_seg = os.path.join(data_path_11,input_path_seg)
-     img_seg,header_seg = load(f_seg)
-
-     inputs_t1 = img_t1.astype(np.float32)
-     inputs_t1ce = img_t1ce.astype(np.float32)
-     inputs_t2 = img_t2.astype(np.float32)
-     inputs_flair = img_flair.astype(np.float32)
-     inputs_seg = img_seg.astype(np.uint8)
-     inputs_seg = convert_label(inputs_seg)
-
-     mask = inputs_t1>0
-
-     inputs_tmp_t1 = (inputs_t1 - inputs_t1[mask].mean()) / inputs_t1[mask].std()
-     inputs_tmp_t1ce = (inputs_t1ce - inputs_t1ce[mask].mean()) / inputs_t1ce[mask].std()
-     inputs_tmp_t2 = (inputs_t2 - inputs_t2[mask].mean()) / inputs_t2[mask].std()
-     inputs_tmp_flair = (inputs_flair - inputs_flair[mask].mean()) / inputs_flair[mask].std()
-
-     #margin = 64/2   # training_patch_size / 2
-     #mask = mask.astype(np.uint8)
-     #min_D_s, max_D_e, min_H_s, max_H_e, min_W_s, max_W_e = cut_edge(mask, margin)
-     #inputs_tmp_t1 = inputs_t1_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-     #inputs_tmp_t1ce = inputs_t1ce_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-     #inputs_tmp_t2 = inputs_t2_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-     #inputs_tmp_flair = inputs_flair_norm[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-
-     #inputs_seg_tmp = inputs_seg[min_D_s:max_D_e + 1, min_H_s: max_H_e + 1, min_W_s:max_W_e + 1]
-
-     inputs_tmp_t1 = inputs_tmp_t1
-     inputs_tmp_t1ce = inputs_tmp_t1ce
-     inputs_tmp_t2 = inputs_tmp_t2
-     inputs_tmp_flair = inputs_tmp_flair
-     
-     inputs_tmp_t1 = inputs_tmp_t1#[:, :, :, None]
-     inputs_tmp_t1ce = inputs_tmp_t1ce#[:, :, :, None]
-     inputs_tmp_t2 = inputs_tmp_t2#[:, :, :, None]
-     inputs_tmp_flair = inputs_tmp_flair#[:, :, :, None]
-
-     #inputs = np.concatenate((inputs_tmp_t1,inputs_tmp_t1ce,inputs_tmp_t2,inputs_tmp_flair),axis=3)
-     inputs_caffe = inputs_tmp_t2#[None, :, :, :, :]
-     #inputs_seg_caffe = inputs_seg_tmp[None, :, :, :, :]
-     
-     #inputs_caffe = inputs_caffe.transpose(0, 4, 3, 1, 2)
-     #inputs_seg_caffe = inputs_seg_caffe.transpose(0, 4, 3, 1, 2)
-
-     print (inputs_caffe.shape, inputs_seg_caffe.shape)
-     with h5py.File(os.path.join(target_path, 'train_brats_nocut_%s.h5' % (i+1)), 'w') as f:
-         f['data'] = inputs_caffe  # for caffe num channel x d x h x w
-         f['label'] = torch.Tensor([1])
-     i = i+1   
-
+ 
 
 if __name__ == '__main__':
     if not os.path.exists(target_path):
