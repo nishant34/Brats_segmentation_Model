@@ -19,10 +19,10 @@ scheduler_S = optim.lr_scheduler.StepLR(optimizer_S, step_size=step_size_S, gamm
 
 if __name__ == '__main__':
     #train data
-    mri_data_train = H5Dataset("/train_data", mode='train')
+    mri_data_train = BratsDataset("/train_data", mode='train')
     trainloader = dataloader.DataLoader(mri_data_train, batch_size=8, shuffle=True)
     #val data
-    mri_data_val = H5Dataset("/val_data", mode='val')
+    mri_data_val = BratsDataset("/val_data", mode='val')
     valloader = dataloader.DataLoader(mri_data_val, batch_size=2, shuffle=False)
     
     print('Rate     | epoch  | Loss seg| DSC_val')
