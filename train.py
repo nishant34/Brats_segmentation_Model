@@ -1,5 +1,5 @@
 import torch.utils.data as dataloader
-from dataloader import H5Dataset
+from dataloader import BratsDataset
 import torch.optim as optim
 from common import *
 
